@@ -60,6 +60,30 @@ void *m_malloc(size_t size) {
     return (void *) NULL;
 }
 
+void m_free(void *ptr) {
+    /*
+    This function frees the allocated block pointed to by ptr
+    and returns it. Memory can only be freed if ptr points to
+    a valid block in the heap. This function will also
+    consolidate neighbouring blocks.
+    */
+
+    // traverse h_list and search for h_node whose c_blk == ptr
+    struct h_Node *prev = NULL;
+    struct h_Node *curr = &h_list;
+    while (curr != NULL) {
+        if (curr->c_blk == ptr) {
+            printf("JOE MAMA %zu\n", curr->SIZE);
+            curr->STATUS = FREE;
+
+            // perform consolidation with neighbouring blocks
+            break;
+        }
+        prev = curr;
+        curr = curr->NEXT;
+    }
+}
+
 void h_layout(struct h_Node *ptr) {
     /*
     This function displays the layout of the h_list.
@@ -89,6 +113,10 @@ int main(int argc, char *argv[])
     return_status = m_malloc(9999);
     printf("RETURN STATUS: %p\n", return_status);
     h_layout(&h_list);
-    return_status = m_malloc(2);
-    printf("RETURN STATUS: %p\n", return_status);
+    void *return_status_1 = m_malloc(1);
+    printf("RETURN STATUS: %p\n", return_status_1);
+    h_layout(&h_list);
+    m_free(return_status_1);
+    printf("---------\n");
+    h_layout(&h_list);
 }
