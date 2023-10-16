@@ -7,6 +7,6 @@ int main(int argc, char *argv[])
     printf("1- %p \n", c_break);
     c_break = sbrk(+5);
     printf("2- %p \n", c_break);
-    c_break = sbrk(+5);
+    c_break = sbrk(-5);
     printf("3- %p \n", c_break);
 }

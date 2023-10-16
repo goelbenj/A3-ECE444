@@ -9,6 +9,8 @@ void *c_break;
 
 struct h_Node h_list;
 
+void consolidate_blocks(struct h_Node *block_1, struct h_Node *block_2);
+
 int m_init(void) {
     /*
     This function initializes a virtual heap in the stack memory of this program.
@@ -77,10 +79,32 @@ void m_free(void *ptr) {
             curr->STATUS = FREE;
 
             // perform consolidation with neighbouring blocks
+            consolidate_blocks(prev, curr);
+            consolidate_blocks(curr, curr->NEXT);
             break;
         }
         prev = curr;
         curr = curr->NEXT;
+    }
+}
+
+void consolidate_blocks(struct h_Node *block_1, struct h_Node *block_2) {
+    /*
+    This function will consolidate two blocks if they are free and non-NULL.
+    */
+
+    if (block_1 == NULL || block_2 == NULL) {
+        // cannot consolidate NULL blocks
+        printf("CONSOLIDATE NULL\n");
+        return;
+    }
+
+    if (block_1->STATUS == FREE && block_2->STATUS == FREE) {
+        printf("CONSOLIDATE FREE\n");
+        block_1->SIZE += block_2->SIZE;
+        block_2->n_blk = block_2->n_blk;
+        block_1->NEXT = block_2->NEXT;
+        sbrk(-1 * sizeof(struct h_Node));
     }
 }
 
@@ -117,6 +141,10 @@ int main(int argc, char *argv[])
     printf("RETURN STATUS: %p\n", return_status_1);
     h_layout(&h_list);
     m_free(return_status_1);
+    m_free(return_status);
+    printf("---------\n");
+    h_layout(&h_list);
+    return_status = m_malloc(9999);
     printf("---------\n");
     h_layout(&h_list);
 }
