@@ -46,7 +46,8 @@ void *m_malloc(size_t size) {
             new_h_node->STATUS = BLOCKED;
             new_h_node->SIZE = size;
             new_h_node->c_blk = curr->c_blk;
-            new_h_node->n_blk = NULL;
+            new_h_node->n_blk = (curr->NEXT) ? curr->NEXT->c_blk : NULL;
+            new_h_node->NEXT = curr->NEXT;
 
             curr->SIZE -= size;
             curr->c_blk += size;
@@ -75,12 +76,11 @@ void m_free(void *ptr) {
     struct h_Node *curr = &h_list;
     while (curr != NULL) {
         if (curr->c_blk == ptr) {
-            printf("JOE MAMA %zu\n", curr->SIZE);
             curr->STATUS = FREE;
 
             // perform consolidation with neighbouring blocks
-            consolidate_blocks(prev, curr);
             consolidate_blocks(curr, curr->NEXT);
+            consolidate_blocks(prev, curr);
             break;
         }
         prev = curr;
@@ -95,14 +95,12 @@ void consolidate_blocks(struct h_Node *block_1, struct h_Node *block_2) {
 
     if (block_1 == NULL || block_2 == NULL) {
         // cannot consolidate NULL blocks
-        printf("CONSOLIDATE NULL\n");
         return;
     }
 
     if (block_1->STATUS == FREE && block_2->STATUS == FREE) {
-        printf("CONSOLIDATE FREE\n");
         block_1->SIZE += block_2->SIZE;
-        block_2->n_blk = block_2->n_blk;
+        block_1->n_blk = (block_2->NEXT) ? block_2->NEXT->c_blk : NULL;
         block_1->NEXT = block_2->NEXT;
         sbrk(-1 * sizeof(struct h_Node));
     }
@@ -131,20 +129,17 @@ void h_layout(struct h_Node *ptr) {
 int main(int argc, char *argv[])
 {
     int status = m_init();
+    void *return_status = m_malloc(2000);
+    void *return_status_1 = m_malloc(1000);
+    void *return_status_2 = m_malloc(3000);
     h_layout(&h_list);
+    m_free(return_status_2);
     printf("---------\n");
-    void *return_status;
-    return_status = m_malloc(9999);
-    printf("RETURN STATUS: %p\n", return_status);
-    h_layout(&h_list);
-    void *return_status_1 = m_malloc(1);
-    printf("RETURN STATUS: %p\n", return_status_1);
     h_layout(&h_list);
     m_free(return_status_1);
-    m_free(return_status);
     printf("---------\n");
     h_layout(&h_list);
-    return_status = m_malloc(9999);
+    m_free(return_status);
     printf("---------\n");
     h_layout(&h_list);
 }
