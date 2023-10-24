@@ -5,7 +5,7 @@
 
 struct h_Node h_list;
 
-void consolidate_blocks(struct h_Node *block_1, struct h_Node *block_2);
+void consolidate_blocks(struct h_Node *anchor, struct h_Node *block_1, struct h_Node *block_2);
 
 int m_init(void) {
     /*
@@ -68,36 +68,20 @@ void m_free(void *ptr) {
     */
 
     // traverse h_list and search for h_node whose c_blk == ptr
-    // struct h_Node *prev = NULL;
+    struct h_Node *prev_prev = NULL;
+    struct h_Node *prev = NULL;
     struct h_Node *curr = &h_list;
-    struct h_Node *fix = NULL;
-    while (curr->NEXT != NULL) {
-            b1 -> b2 -> b3 -> b4
-            (free b2)
-            b1 -> f1 -> b3 -> b4
-            (free b3)
-            b1 -> f1_larger -> b4
 
-        if (curr->NEXT->c_blk == ptr) {
-            struct h_Node *next = curr->NEXT;
-            next->STATUS = FREE;
-            if (next->NEXT == NULL) {
-                // cannot consolidate NULL blocks
-            } else if (next->STATUS == FREE && next->NEXT->STATUS == FREE) {
-                next->SIZE += next->NEXT->SIZE;
-                next->c_blk = next->NEXT->c_blk;
-                next->n_blk = next->NEXT->n_blk;
-                next->NEXT = next->NEXT->NEXT;
-                sbrk(-1 * sizeof(struct h_Node));
-                curr->n_blk = next->c_blk;
-                fix = curr;
-            }
-        } else if (curr->c_blk == ptr) {
+    while (curr != NULL) {
+        if (curr->c_blk == ptr) {
             curr->STATUS = FREE;
-            // perform consolidation with neighbouring blocks
-            consolidate_blocks(curr, curr->NEXT);
+
+            consolidate_blocks(prev, curr, curr->NEXT);
+            consolidate_blocks(prev_prev, prev, curr);
             break;
         }
+        prev_prev = prev;
+        prev = curr;
         curr = curr->NEXT;
     }
 }
@@ -162,10 +146,10 @@ void *m_realloc(void *ptr, size_t size) {
 
 }
 
-void consolidate_blocks(struct h_Node *block_1, struct h_Node *block_2) {
+void consolidate_blocks(struct h_Node *anchor, struct h_Node *block_1, struct h_Node *block_2) {
     /*
-    This function will consolidate two blocks into the first block
-    if they are free and non-NULL.
+    This function will consolidate two blocks if they are free and non-NULL.
+    It will also update anchor->n_blk if we successfully consolidate.
     */
 
     if (block_1 == NULL || block_2 == NULL) {
@@ -179,6 +163,7 @@ void consolidate_blocks(struct h_Node *block_1, struct h_Node *block_2) {
         block_1->n_blk = block_2->n_blk;
         block_1->NEXT = block_2->NEXT;
         sbrk(-1 * sizeof(struct h_Node));
+        anchor->n_blk = block_1->c_blk;
     }
 }
 
