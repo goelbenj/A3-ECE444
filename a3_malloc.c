@@ -163,7 +163,9 @@ void consolidate_blocks(struct h_Node *anchor, struct h_Node *block_1, struct h_
         block_1->n_blk = block_2->n_blk;
         block_1->NEXT = block_2->NEXT;
         sbrk(-1 * sizeof(struct h_Node));
-        anchor->n_blk = block_1->c_blk;
+        if (anchor != NULL) {
+            anchor->n_blk = block_1->c_blk;
+        }
     }
 }
 
@@ -215,6 +217,7 @@ void h_layout(struct h_Node *ptr) {
         i++;
         curr = curr->NEXT;
     }
+    printf("---------\n");
 }
 
 double space_utilization(struct h_Node *h_list) {
@@ -236,18 +239,34 @@ void cleanup(struct h_Node *h_list) {
     while (curr != NULL) {
         struct h_Node *tmp = curr;
         curr = curr->NEXT;
-        printf("DEBUG SIZE %zu\n", tmp->SIZE);
         m_free(tmp->c_blk);
-        h_layout(h_list);
     }
 }
 
 void driver_1(void) {
+    h_layout(&h_list);
+    char *pt1 = m_malloc(2);
+    h_layout(&h_list);
+    char *pt2 = m_malloc(5);
+    h_layout(&h_list);
+    char *pt3 = m_malloc(3);
+    h_layout(&h_list);
+    m_free(pt2);
+    h_layout(&h_list);
+    pt3 = m_malloc(15);
+    h_layout(&h_list);
 
+    int consolidate_status = m_check();
+    printf("CONSOLIDATION STATUS: %i\n", consolidate_status);
+    double utilization = space_utilization(&h_list);
+    printf("SPACE UTILIZATION: %lf\n", utilization);
+
+    // cleanup
+    cleanup(&h_list);
+    printf("DRIVER 1 WORKING\n\n");
 }
 
 void driver_2(void) {
-    int status = m_init();
     char *return_status = (char *)m_malloc(4);
     return_status[0] = 'A';
     return_status[1] = 'B';
@@ -261,7 +280,6 @@ void driver_2(void) {
     return_status_2[2] = 'H';
     void *new_realloc = m_realloc(return_status, 5);
     h_layout(&h_list);
-    printf("---------\n");
     m_free(return_status_1);
     h_layout(&h_list);
     int consolidate_status = m_check();
@@ -271,13 +289,27 @@ void driver_2(void) {
 
     // cleanup
     cleanup(&h_list);
+    printf("DRIVER 2 WORKING\n\n");
 }
 
 void driver_3(void) {
-
+    void *valid_malloc = m_malloc(HEAP_SIZE);
+    int consolidate_status = m_check();
+    printf("CONSOLIDATION STATUS: %i\n", consolidate_status);
+    double utilization = space_utilization(&h_list);
+    printf("SPACE UTILIZATION: %lf\n", utilization);
+    void *invalid_malloc = m_malloc(1);
+    if (invalid_malloc == NULL) {
+        // cleanup
+        cleanup(&h_list);
+        printf("DRIVER 3 WORKING\n\n");
+    }
 }
 
 int main(int argc, char *argv[])
 {
+    int status = m_init();
+    driver_1();
     driver_2();
+    driver_3();
 }
