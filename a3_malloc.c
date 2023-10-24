@@ -236,19 +236,6 @@ int main(int argc, char *argv[])
     printf("---------\n");
     m_free(return_status_1);
     h_layout(&h_list);
-    printf("---------\n");
-    // char *malloc_freed = (char *)m_malloc(5);
-    // malloc_freed[1] = 'X';
-    // malloc_freed[2] = 'Y';
-    // malloc_freed[3] = 'Z';
-    // h_layout(&h_list);
-    // printf("---------\n");
-    // m_free(return_status_2);
-    // h_layout(&h_list);
-    // m_free(return_status_1);
-    // printf("---------\n");
-    // h_layout(&h_list);
-    // m_free(return_status);
-    // printf("---------\n");
-    // h_layout(&h_list);
+    int consolidate_status = m_check();
+    printf("CONSOLIDATION STATUS: %i\n", consolidate_status);
 }
