@@ -217,8 +217,36 @@ void h_layout(struct h_Node *ptr) {
     }
 }
 
-int main(int argc, char *argv[])
-{
+double space_utilization(struct h_Node *h_list) {
+    long allocated_bytes = 0;
+    struct h_Node *curr = h_list;
+    while (curr != NULL) {
+        if (curr->STATUS == BLOCKED) {
+            allocated_bytes += curr->SIZE;
+        }
+
+        curr = curr->NEXT;
+    }
+    double utilization = (double)allocated_bytes / HEAP_SIZE;
+    return utilization;
+}
+
+void cleanup(struct h_Node *h_list) {
+    struct h_Node *curr = h_list;
+    while (curr != NULL) {
+        struct h_Node *tmp = curr;
+        curr = curr->NEXT;
+        printf("DEBUG SIZE %zu\n", tmp->SIZE);
+        m_free(tmp->c_blk);
+        h_layout(h_list);
+    }
+}
+
+void driver_1(void) {
+
+}
+
+void driver_2(void) {
     int status = m_init();
     char *return_status = (char *)m_malloc(4);
     return_status[0] = 'A';
@@ -238,4 +266,18 @@ int main(int argc, char *argv[])
     h_layout(&h_list);
     int consolidate_status = m_check();
     printf("CONSOLIDATION STATUS: %i\n", consolidate_status);
+    double utilization = space_utilization(&h_list);
+    printf("SPACE UTILIZATION: %lf\n", utilization);
+
+    // cleanup
+    cleanup(&h_list);
+}
+
+void driver_3(void) {
+
+}
+
+int main(int argc, char *argv[])
+{
+    driver_2();
 }
