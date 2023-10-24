@@ -1,7 +1,7 @@
 #include "a3_malloc.h"
 #include <unistd.h>
 
-#define HEAP_SIZE 20
+#define HEAP_SIZE 14
 
 struct h_Node h_list;
 
@@ -68,18 +68,36 @@ void m_free(void *ptr) {
     */
 
     // traverse h_list and search for h_node whose c_blk == ptr
-    struct h_Node *prev = NULL;
+    // struct h_Node *prev = NULL;
     struct h_Node *curr = &h_list;
-    while (curr != NULL) {
-        if (curr->c_blk == ptr) {
-            curr->STATUS = FREE;
+    struct h_Node *fix = NULL;
+    while (curr->NEXT != NULL) {
+            b1 -> b2 -> b3 -> b4
+            (free b2)
+            b1 -> f1 -> b3 -> b4
+            (free b3)
+            b1 -> f1_larger -> b4
 
+        if (curr->NEXT->c_blk == ptr) {
+            struct h_Node *next = curr->NEXT;
+            next->STATUS = FREE;
+            if (next->NEXT == NULL) {
+                // cannot consolidate NULL blocks
+            } else if (next->STATUS == FREE && next->NEXT->STATUS == FREE) {
+                next->SIZE += next->NEXT->SIZE;
+                next->c_blk = next->NEXT->c_blk;
+                next->n_blk = next->NEXT->n_blk;
+                next->NEXT = next->NEXT->NEXT;
+                sbrk(-1 * sizeof(struct h_Node));
+                curr->n_blk = next->c_blk;
+                fix = curr;
+            }
+        } else if (curr->c_blk == ptr) {
+            curr->STATUS = FREE;
             // perform consolidation with neighbouring blocks
             consolidate_blocks(curr, curr->NEXT);
-            consolidate_blocks(prev, curr);
             break;
         }
-        prev = curr;
         curr = curr->NEXT;
     }
 }
@@ -146,7 +164,8 @@ void *m_realloc(void *ptr, size_t size) {
 
 void consolidate_blocks(struct h_Node *block_1, struct h_Node *block_2) {
     /*
-    This function will consolidate two blocks if they are free and non-NULL.
+    This function will consolidate two blocks into the first block
+    if they are free and non-NULL.
     */
 
     if (block_1 == NULL || block_2 == NULL) {
@@ -156,10 +175,31 @@ void consolidate_blocks(struct h_Node *block_1, struct h_Node *block_2) {
 
     if (block_1->STATUS == FREE && block_2->STATUS == FREE) {
         block_1->SIZE += block_2->SIZE;
-        block_1->n_blk = (block_2->NEXT) ? block_2->NEXT->c_blk : NULL;
+        block_1->c_blk = block_2->c_blk;
+        block_1->n_blk = block_2->n_blk;
         block_1->NEXT = block_2->NEXT;
         sbrk(-1 * sizeof(struct h_Node));
     }
+}
+
+int m_check(void) {
+    /*
+    This function checks if the heap is consistent or not.
+    It will check that there are no adjacent FREE blocks,
+    if there are any problems -1 is returned, else 0 is returned.
+    */
+
+    struct h_Node *prev = &h_list;
+    struct h_Node *curr = (&h_list)->NEXT;
+    while (curr != NULL) {
+        if (prev->STATUS == FREE && curr->STATUS == FREE) {
+            return -1;
+        }
+
+        prev = curr;
+        curr = curr->NEXT;
+    }
+    return 0;
 }
 
 void print_block(void *ptr, size_t size) {
@@ -196,18 +236,28 @@ int main(int argc, char *argv[])
 {
     int status = m_init();
     char *return_status = (char *)m_malloc(4);
-    return_status[0] = 'D';
-    return_status[1] = 'E';
-    return_status[2] = 'A';
+    return_status[0] = 'A';
+    return_status[1] = 'B';
+    return_status[2] = 'C';
     return_status[3] = 'D';
-    void *return_status_1 = m_malloc(1);
+    char *return_status_1 = (char *)m_malloc(1);
+    return_status_1[0] = 'E';
     char *return_status_2 = (char *)m_malloc(3);
-    return_status_2[0] = 'C';
-    return_status_2[1] = 'A';
-    return_status_2[2] = 'T';
+    return_status_2[0] = 'F';
+    return_status_2[1] = 'G';
+    return_status_2[2] = 'H';
     void *new_realloc = m_realloc(return_status, 5);
     h_layout(&h_list);
     printf("---------\n");
+    m_free(return_status_1);
+    h_layout(&h_list);
+    printf("---------\n");
+    // char *malloc_freed = (char *)m_malloc(5);
+    // malloc_freed[1] = 'X';
+    // malloc_freed[2] = 'Y';
+    // malloc_freed[3] = 'Z';
+    // h_layout(&h_list);
+    // printf("---------\n");
     // m_free(return_status_2);
     // h_layout(&h_list);
     // m_free(return_status_1);
